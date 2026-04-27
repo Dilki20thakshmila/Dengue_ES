@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DengueXpert — Sri Lanka Dengue Expert System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:        #C1121F;
+  --red-dark:   #8B0000;
+  --red-pale:   #FFF0F0;
+  --amber:      #E07B00;
+  --amber-pale: #FFF8EC;
+  --green:      #1B6B3A;
+  --green-pale: #EDFAF3;
+  --ink:        #0F0F0F;
+  --ink-2:      #2C2C2C;
+  --ink-3:      #5C5C5C;
+  --line:       #E2E2E2;
+  --bg:         #F9F7F4;
+  --white:      #FFFFFF;
+  --serif:  'Playfair Display', Georgia, serif;
+  --sans:   'IBM Plex Sans', sans-serif;
+  --mono:   'IBM Plex Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--ink);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 32px; height: 32px;
+  background: var(--red);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+
+.brand-name {
+  font-family: var(--serif);
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+
+.brand-tag {
+  font-size: 11px;
+  color: #888;
+  font-family: var(--mono);
+  letter-spacing: 1px;
+}
+
+.topbar-info {
+  font-size: 11px;
+  color: #666;
+  font-family: var(--mono);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #4CAF50;
+  animation: blink 2s infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── HERO ── */
+.hero {
+  background: var(--ink);
+  color: #fff;
+  padding: 60px 48px 56px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: 'DENGUE\AXPERT';
+  position: absolute;
+  right: -20px;
+  top: -20px;
+  font-family: var(--serif);
+  font-size: 160px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.03);
+  line-height: 1;
+  pointer-events: none;
+  white-space: pre;
+}
+
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--red);
+}
+
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(36px, 5vw, 60px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+  max-width: 640px;
+}
+
+.hero h1 em {
+  font-style: normal;
+  color: var(--red);
+}
+
+.hero-desc {
+  font-size: 15px;
+  color: #999;
+  max-width: 520px;
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+.hero-pills {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  color: #bbb;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── FORM WRAPPER ── */
+.form-wrapper {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+/* ── SECTION CARD ── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+}
+
+.card-header {
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.card-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--red);
+  background: var(--red-pale);
+  border: 1px solid #F5C6C3;
+  border-radius: 6px;
+  padding: 3px 8px;
+  flex-shrink: 0;
+}
+
+.card-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.card-subtitle {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  margin-top: 1px;
+}
+
+.card-body { padding: 28px; }
+
+/* ── FORM ELEMENTS ── */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+.form-row.full  { grid-template-columns: 1fr; }
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--ink-2);
+  text-transform: uppercase;
+}
+
+label .unit {
+  font-weight: 400;
+  color: var(--ink-3);
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  height: 44px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 0 14px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -moz-appearance: textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+input:focus, select:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(193,18,31,0.08);
+}
+
+/* ── SYMPTOM GRID ── */
+.symptom-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.symptom-grid.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.sym-chip {
+  position: relative;
+}
+
+.sym-chip input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+}
+
+.sym-chip label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--white);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.sym-chip label:hover {
+  border-color: #F5C6C3;
+  background: var(--red-pale);
+}
+
+.sym-chip input:checked + label {
+  border-color: var(--red);
+  background: var(--red-pale);
+  color: var(--red);
+}
+
+.sym-chip label .chip-icon {
+  font-size: 20px;
+  width: 26px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sym-chip label .chip-check {
+  margin-left: auto;
+  width: 18px; height: 18px;
+  border: 1.5px solid var(--line);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.sym-chip input:checked + label .chip-check {
+  background: var(--red);
+  border-color: var(--red);
+  color: white;
+}
+
+/* ── WARNING / SEVERE chips ── */
+.warn-chip label {
+  border-color: #FDEBD0;
+  background: var(--amber-pale);
+}
+
+.warn-chip label:hover,
+.warn-chip input:checked + label {
+  border-color: var(--amber);
+  background: #FFF0D9;
+  color: var(--amber);
+}
+
+.warn-chip input:checked + label .chip-check {
+  background: var(--amber);
+  border-color: var(--amber);
+}
+
+.severe-chip label {
+  border-color: #F5C6C3;
+}
+
+.severe-chip input:checked + label {
+  border-color: var(--red-dark);
+  background: var(--red-pale);
+  color: var(--red-dark);
+}
+
+.severe-chip input:checked + label .chip-check {
+  background: var(--red-dark);
+  border-color: var(--red-dark);
+}
+
+/* ── PLATELET SECTION ── */
+.platelet-toggle {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.toggle-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1.5px solid var(--line);
+  background: var(--white);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--ink-2);
+}
+
+.toggle-btn.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: white;
+}
+
+#platelet-input-row { display: none; }
+#platelet-input-row.show { display: grid; }
+
+/* ── DIVIDER ── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 20px;
+}
+
+.section-divider span {
+  font-size: 10px;
+  font-family: var(--mono);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* ── SUBMIT ── */
+.submit-area {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.submit-note {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  line-height: 1.5;
+  max-width: 420px;
+}
+
+.submit-note strong {
+  display: block;
+  color: var(--ink-2);
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+
+.btn-submit {
+  height: 52px;
+  padding: 0 36px;
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-submit:hover {
+  background: var(--red-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(193,18,31,0.25);
+}
+
+.btn-submit:active { transform: translateY(0); }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--ink);
+  color: #555;
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  font-family: var(--mono);
+}
+
+footer strong { color: #888; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<nav class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-mark">🦟</div>
+    <div>
+      <div class="brand-name">DengueXpert</div>
+      <div class="brand-tag">SRI LANKA · WHO GUIDELINES 2009</div>
+    </div>
+  </div>
+  <div class="topbar-info">
+    <span class="live-dot"></span>
+    Expert System v1.0 · MSc AI
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Dengue Fever Diagnosis</div>
+  <h1>Clinical Decision<br>Support for <em>Sri Lanka</em></h1>
+  <p class="hero-desc">
+    A rule-based expert system that assesses dengue fever risk using WHO 2009
+    classification guidelines and Sri Lanka Ministry of Health local context data.
+    Fill in the patient details below to receive an instant diagnosis.
+  </p>
+  <div class="hero-pills">
+    <span class="pill">🧠 Forward-Chaining Inference</span>
+    <span class="pill">📋 7 Diagnostic Rules</span>
+    <span class="pill">🇱🇰 Sri Lanka Local Context</span>
+    <span class="pill">⚕ WHO Classification 2009</span>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="form-wrapper">
+<form method="POST" action="/diagnose">
+
+  <!-- SECTION 1: PATIENT INFO -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">01</span>
+      <div>
+        <div class="card-title">Patient Information</div>
+        <div class="card-subtitle">Basic demographics and location</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="form-row three">
+        <div class="form-group">
+          <label>Patient Name</label>
+          <input type="text" name="name" placeholder="e.g. Kasun Perera" required>
+        </div>
+        <div class="form-group">
+          <label>Age <span class="unit">years</span></label>
+          <input type="number" name="age" min="0" max="120" placeholder="e.g. 32" required>
+        </div>
+        <div class="form-group">
+          <label>District</label>
+          <select name="district" required>
+            <option value="">Select district…</option>
+            <optgroup label="High-Risk Districts">
+              <option value="colombo">Colombo ⚠</option>
+              <option value="gampaha">Gampaha ⚠</option>
+              <option value="kandy">Kandy ⚠</option>
+              <option value="kalutara">Kalutara ⚠</option>
+              <option value="galle">Galle ⚠</option>
+              <option value="ratnapura">Ratnapura ⚠</option>
+            </optgroup>
+            <optgroup label="Other Districts">
+              <option value="matara">Matara</option>
+              <option value="hambantota">Hambantota</option>
+              <option value="jaffna">Jaffna</option>
+              <option value="kurunegala">Kurunegala</option>
+              <option value="puttalam">Puttalam</option>
+              <option value="nuwara eliya">Nuwara Eliya</option>
+              <option value="matale">Matale</option>
+              <option value="kegalle">Kegalle</option>
+              <option value="badulla">Badulla</option>
+              <option value="monaragala">Monaragala</option>
+              <option value="trincomalee">Trincomalee</option>
+              <option value="batticaloa">Batticaloa</option>
+              <option value="ampara">Ampara</option>
+              <option value="anuradhapura">Anuradhapura</option>
+              <option value="polonnaruwa">Polonnaruwa</option>
+              <option value="mannar">Mannar</option>
+              <option value="vavuniya">Vavuniya</option>
+              <option value="mullaitivu">Mullaitivu</option>
+              <option value="kilinochchi">Kilinochchi</option>
+              <option value="other">Other</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: FEVER -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">02</span>
+      <div>
+        <div class="card-title">Fever Details</div>
+        <div class="card-subtitle">Temperature and duration — core dengue indicator</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Body Temperature <span class="unit">°C</span></label>
+          <input type="number" name="fever" min="35" max="42" step="0.1"
+                 placeholder="e.g. 38.5" required>
+        </div>
+        <div class="form-group">
+          <label>Days of Fever <span class="unit">days</span></label>
+          <input type="number" name="days_of_fever" min="0" max="30"
+                 placeholder="e.g. 3" required>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: CLASSIC SYMPTOMS -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">03</span>
+      <div>
+        <div class="card-title">Classic Dengue Symptoms</div>
+        <div class="card-subtitle">Select all symptoms currently present</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="symptom-grid three">
+        <div class="sym-chip">
+          <input type="checkbox" id="headache" name="headache">
+          <label for="headache">
+            <span class="chip-icon">🤯</span> Severe Headache
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+        <div class="sym-chip">
+          <input type="checkbox" id="eye_pain" name="eye_pain">
+          <label for="eye_pain">
+            <span class="chip-icon">👁</span> Pain Behind Eyes
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+        <div class="sym-chip">
+          <input type="checkbox" id="muscle_pain" name="muscle_pain">
+          <label for="muscle_pain">
+            <span class="chip-icon">💪</span> Muscle Pain
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+        <div class="sym-chip">
+          <input type="checkbox" id="joint_pain" name="joint_pain">
+          <label for="joint_pain">
+            <span class="chip-icon">🦴</span> Joint Pain
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+        <div class="sym-chip">
+          <input type="checkbox" id="rash" name="rash">
+          <label for="rash">
+            <span class="chip-icon">🔴</span> Skin Rash
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+        <div class="sym-chip">
+          <input type="checkbox" id="nausea" name="nausea">
+          <label for="nausea">
+            <span class="chip-icon">🤢</span> Nausea / Vomiting
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: WARNING SIGNS -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">04</span>
+      <div>
+        <div class="card-title">Warning Signs</div>
+        <div class="card-subtitle">These indicate escalating severity — select carefully</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="symptom-grid">
+        <div class="sym-chip warn-chip">
+          <input type="checkbox" id="abdominal_pain" name="abdominal_pain">
+          <label for="abdominal_pain">
+            <span class="chip-icon">🫁</span> Severe Abdominal Pain
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+        <div class="sym-chip warn-chip">
+          <input type="checkbox" id="persistent_vomiting" name="persistent_vomiting">
+          <label for="persistent_vomiting">
+            <span class="chip-icon">🤮</span> Persistent Vomiting (3+/hr)
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+        <div class="sym-chip warn-chip">
+          <input type="checkbox" id="mucosal_bleeding" name="mucosal_bleeding">
+          <label for="mucosal_bleeding">
+            <span class="chip-icon">🩸</span> Gum / Nose Bleeding
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+        <div class="sym-chip warn-chip">
+          <input type="checkbox" id="rapid_breathing" name="rapid_breathing">
+          <label for="rapid_breathing">
+            <span class="chip-icon">😮‍💨</span> Rapid / Difficult Breathing
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+        <div class="sym-chip warn-chip">
+          <input type="checkbox" id="fluid_accumulation" name="fluid_accumulation">
+          <label for="fluid_accumulation">
+            <span class="chip-icon">💧</span> Fluid Accumulation
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="section-divider"><span>Platelet Count</span></div>
+
+      <div class="platelet-toggle">
+        <button type="button" class="toggle-btn active" id="plt-no-btn"
+                onclick="togglePlatelet(false)">No test result available</button>
+        <button type="button" class="toggle-btn" id="plt-yes-btn"
+                onclick="togglePlatelet(true)">I have platelet count</button>
+      </div>
+
+      <div class="form-row" id="platelet-input-row">
+        <div class="form-group">
+          <label>Platelet Count <span class="unit">cells/µL</span></label>
+          <input type="number" name="platelet" id="platelet-val"
+                 min="1000" max="500000" placeholder="e.g. 95000" value="150000">
+        </div>
+        <div class="form-group">
+          <label>Reference Range</label>
+          <div style="padding: 10px 14px; background: var(--bg); border-radius: 8px; font-size: 12.5px; color: var(--ink-3); font-family: var(--mono); line-height: 1.7; border: 1.5px solid var(--line);">
+            Normal: 150,000–400,000<br>
+            ⚠ Low: &lt; 100,000<br>
+            🚨 Critical: &lt; 20,000
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: SEVERE SIGNS -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">05</span>
+      <div>
+        <div class="card-title">Severe / Emergency Signs</div>
+        <div class="card-subtitle">Indicates possible Dengue Shock Syndrome (DSS)</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="symptom-grid three">
+        <div class="sym-chip severe-chip">
+          <input type="checkbox" id="severe_bleeding" name="severe_bleeding">
+          <label for="severe_bleeding">
+            <span class="chip-icon">🩸</span> Severe Bleeding
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+        <div class="sym-chip severe-chip">
+          <input type="checkbox" id="organ_failure" name="organ_failure">
+          <label for="organ_failure">
+            <span class="chip-icon">🫀</span> Organ Failure Signs
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+        <div class="sym-chip severe-chip">
+          <input type="checkbox" id="altered_consciousness" name="altered_consciousness">
+          <label for="altered_consciousness">
+            <span class="chip-icon">🧠</span> Altered Consciousness
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: LOCAL RISK FACTORS -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-num">06</span>
+      <div>
+        <div class="card-title">Sri Lanka Local Risk Factors</div>
+        <div class="card-subtitle">Used for differential diagnosis and risk scoring</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="symptom-grid">
+        <div class="sym-chip">
+          <input type="checkbox" id="jaundice" name="jaundice">
+          <label for="jaundice">
+            <span class="chip-icon">🟡</span> Yellowing of Skin / Eyes
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+        <div class="sym-chip">
+          <input type="checkbox" id="rat_exposure" name="rat_exposure">
+          <label for="rat_exposure">
+            <span class="chip-icon">🐀</span> Rat / Flood Water Exposure
+            <span class="chip-check">✓</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT -->
+  <div class="submit-area">
+    <div class="submit-note">
+      <strong>Ready to diagnose</strong>
+      The expert system will apply 7 clinical rules using WHO guidelines
+      and Sri Lanka MOH data to assess dengue risk and certainty.
+    </div>
+    <button type="submit" class="btn-submit">
+      Run Diagnosis →
+    </button>
+  </div>
+
+</form>
+</div>
+
+<footer>
+  <strong>DengueXpert</strong> · MSc Artificial Intelligence · Cognitive Systems Module ·
+  Knowledge base: WHO Dengue Guidelines 2009 + Sri Lanka MOH ·
+  For academic demonstration only — not a substitute for medical advice
+</footer>
+
+<script>
+function togglePlatelet(show) {
+  const row = document.getElementById('platelet-input-row');
+  const yesBtn = document.getElementById('plt-yes-btn');
+  const noBtn  = document.getElementById('plt-no-btn');
+  const val    = document.getElementById('platelet-val');
+  if (show) {
+    row.classList.add('show');
+    yesBtn.classList.add('active');
+    noBtn.classList.remove('active');
+    val.required = true;
+  } else {
+    row.classList.remove('show');
+    noBtn.classList.add('active');
+    yesBtn.classList.remove('active');
+    val.required = false;
+    val.value = 150000;
+  }
+}
+</script>
+
+</body>
+</html>
