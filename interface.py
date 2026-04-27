@@ -1,109 +1,62 @@
+from flask import Flask, render_template, request
+from knowledge_base import DengueExpertSystem, PatientFact
 import datetime
 
+app = Flask(__name__)
 
-def ask_yes_no(question):
-    """Ask a yes/no question and keep asking until valid answer."""
-    while True:
-        ans = input(f"  {question} (yes/no): ").strip().lower()
-        if ans in ["yes", "y"]: return True
-        if ans in ["no",  "n"]: return False
-        print("  Please type yes or no.")
+@app.route('/')
+def index():
+    return render_template('index.html')
 
+@app.route('/diagnose', methods=['POST'])
+def diagnose():
+    f = request.form
 
-def ask_number(question, min_val, max_val):
-    """Ask for a number within a valid range."""
-    while True:
-        try:
-            val = float(input(f"  {question}: "))
-            if min_val <= val <= max_val:
-                return val
-            print(f"  Please enter a value between {min_val} and {max_val}.")
-        except ValueError:
-            print("  Please enter a valid number.")
+    patient_data = {
+        'name':                  f.get('name', 'Patient'),
+        'age':                   int(f.get('age', 0)),
+        'district':              f.get('district', 'other').lower(),
+        'month':                 datetime.datetime.now().month,
+        'fever':                 float(f.get('fever', 37.0)),
+        'days_of_fever':         int(f.get('days_of_fever', 0)),
+        'headache':              'headache'             in f,
+        'eye_pain':              'eye_pain'             in f,
+        'muscle_pain':           'muscle_pain'          in f,
+        'joint_pain':            'joint_pain'           in f,
+        'rash':                  'rash'                 in f,
+        'nausea':                'nausea'               in f,
+        'abdominal_pain':        'abdominal_pain'       in f,
+        'persistent_vomiting':   'persistent_vomiting'  in f,
+        'mucosal_bleeding':      'mucosal_bleeding'     in f,
+        'rapid_breathing':       'rapid_breathing'      in f,
+        'fluid_accumulation':    'fluid_accumulation'   in f,
+        'platelet':              float(f.get('platelet', 150000)),
+        'severe_bleeding':       'severe_bleeding'       in f,
+        'organ_failure':         'organ_failure'         in f,
+        'altered_consciousness': 'altered_consciousness' in f,
+        'jaundice':              'jaundice'              in f,
+        'rat_exposure':          'rat_exposure'          in f,
+    }
 
+    engine = DengueExpertSystem()
+    result = engine.run(PatientFact(**patient_data))
 
-def collect_patient_data():
-    """
-    Runs the consultation — asks all questions
-    and returns a dictionary of patient facts.
-    """
-    data = {}
+    severity_meta = {
+        0: {'label': 'LOW RISK',      'color': 'green',  'icon': '✓',  'badge': 'Unlikely Dengue'},
+        1: {'label': 'MODERATE',      'color': 'yellow', 'icon': '⚠',  'badge': 'Probable Dengue'},
+        2: {'label': 'HIGH RISK',     'color': 'orange', 'icon': '⚠⚠', 'badge': 'Warning Signs'},
+        3: {'label': 'CRITICAL',      'color': 'red',    'icon': '🚨', 'badge': 'Severe / DSS'},
+    }
 
-    print("\n" + "="*55)
-    print("  SECTION 1: Basic Information")
-    print("="*55)
+    meta = severity_meta[result.severity]
+    cf_percent = int(result.final_cf * 100)
 
-    data["name"] = input("  Patient name: ").strip()
-
-    districts = [
-        "colombo", "gampaha", "kalutara", "kandy",
-        "matale", "nuwara eliya", "galle", "matara",
-        "hambantota", "jaffna", "ratnapura", "kegalle",
-        "kurunegala", "puttalam", "other"
-    ]
-    print(f"\n  Districts: {', '.join(districts)}")
-    while True:
-        d = input("  District: ").strip().lower()
-        if d in districts:
-            data["district"] = d
-            break
-        print("  Please choose from the list above.")
-
-    # Auto-detect current month for seasonal rule
-    data["month"] = datetime.datetime.now().month
-
-    print("\n" + "="*55)
-    print("  SECTION 2: Fever")
-    print("="*55)
-
-    data["fever"] = ask_number(
-        "Body temperature in °C (e.g. 38.5)", 35.0, 42.0
+    return render_template('result.html',
+        patient=patient_data,
+        result=result,
+        meta=meta,
+        cf_percent=cf_percent
     )
-    data["days_of_fever"] = int(ask_number(
-        "How many days has the fever lasted?", 0, 30
-    ))
 
-    print("\n" + "="*55)
-    print("  SECTION 3: Classic Dengue Symptoms")
-    print("="*55)
-
-    data["headache"]     = ask_yes_no("Severe headache?")
-    data["eye_pain"]     = ask_yes_no("Pain behind the eyes (retro-orbital)?")
-    data["muscle_pain"]  = ask_yes_no("Muscle pain (myalgia)?")
-    data["joint_pain"]   = ask_yes_no("Joint pain (arthralgia)?")
-    data["rash"]         = ask_yes_no("Skin rash appeared?")
-    data["nausea"]       = ask_yes_no("Nausea or vomiting?")
-
-    print("\n" + "="*55)
-    print("  SECTION 4: Warning Signs (serious symptoms)")
-    print("="*55)
-
-    data["abdominal_pain"]      = ask_yes_no("Severe abdominal / stomach pain?")
-    data["persistent_vomiting"] = ask_yes_no("Vomiting 3 or more times in the last hour?")
-    data["mucosal_bleeding"]    = ask_yes_no("Bleeding from gums or nose?")
-    data["rapid_breathing"]     = ask_yes_no("Rapid or difficult breathing?")
-
-    has_platelet = ask_yes_no("Do you have a platelet count result from a blood test?")
-    if has_platelet:
-        data["platelet"] = ask_number(
-            "Platelet count (cells/µL, e.g. 95000)", 1000, 500000
-        )
-    else:
-        data["platelet"] = 150000  # assume normal if unknown
-
-    print("\n" + "="*55)
-    print("  SECTION 5: Severe Signs")
-    print("="*55)
-
-    data["severe_bleeding"]        = ask_yes_no("Severe bleeding (blood in vomit, stool or urine)?")
-    data["organ_failure"]          = ask_yes_no("Signs of organ failure (doctor told you)?")
-    data["altered_consciousness"]  = ask_yes_no("Confusion, difficulty waking, or unconsciousness?")
-
-    print("\n" + "="*55)
-    print("  SECTION 6: Sri Lanka Local Risk Factors")
-    print("="*55)
-
-    data["jaundice"]      = ask_yes_no("Yellowing of eyes or skin (jaundice)?")
-    data["rat_exposure"]  = ask_yes_no("Recent contact with flood water or rats?")
-
-    return data
+if __name__ == '__main__':
+    app.run(debug=True)
