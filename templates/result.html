@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnosis Result — DengueXpert</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:        #C1121F;
+  --red-dark:   #8B0000;
+  --red-pale:   #FFF0F0;
+  --amber:      #E07B00;
+  --amber-pale: #FFF8EC;
+  --green:      #1B6B3A;
+  --green-pale: #EDFAF3;
+  --ink:        #0F0F0F;
+  --ink-2:      #2C2C2C;
+  --ink-3:      #5C5C5C;
+  --line:       #E2E2E2;
+  --bg:         #F9F7F4;
+  --white:      #FFFFFF;
+  --serif:  'Playfair Display', Georgia, serif;
+  --sans:   'IBM Plex Sans', sans-serif;
+  --mono:   'IBM Plex Mono', monospace;
+
+  /* Dynamic — overridden per severity */
+  --accent:     #C1121F;
+  --accent-pale:#FFF0F0;
+  --accent-mid: #F5C6C3;
+}
+
+/* Severity themes */
+body.sev-0 { --accent: #1B6B3A; --accent-pale: #EDFAF3; --accent-mid: #A9DFBF; }
+body.sev-1 { --accent: #C1121F; --accent-pale: #FFF0F0; --accent-mid: #F5C6C3; }
+body.sev-2 { --accent: #E07B00; --accent-pale: #FFF8EC; --accent-mid: #F9E4A0; }
+body.sev-3 { --accent: #8B0000; --accent-pale: #FFF0F0; --accent-mid: #C9A0A0; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--ink);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 32px; height: 32px;
+  background: var(--red);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+
+.brand-name { font-family: var(--serif); font-size: 20px; }
+.brand-tag  { font-size: 11px; color: #888; font-family: var(--mono); letter-spacing: 1px; }
+
+.btn-back {
+  height: 36px;
+  padding: 0 18px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: #ccc;
+  font-family: var(--sans);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s;
+}
+
+.btn-back:hover {
+  background: rgba(255,255,255,0.14);
+  color: white;
+}
+
+/* ── HERO RESULT BANNER ── */
+.result-banner {
+  background: var(--accent);
+  color: white;
+  padding: 52px 48px 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.result-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top right, rgba(255,255,255,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.banner-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 40px;
+  align-items: start;
+  max-width: 900px;
+}
+
+.banner-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.banner-eyebrow::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: currentColor;
+}
+
+.banner-title {
+  font-family: var(--serif);
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.banner-patient {
+  font-size: 14px;
+  opacity: 0.75;
+  margin-bottom: 28px;
+}
+
+/* ── CF METER ── */
+.cf-section { margin-top: 4px; }
+
+.cf-label {
+  font-size: 11px;
+  font-family: var(--mono);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.65;
+  margin-bottom: 8px;
+}
+
+.cf-track {
+  width: 100%;
+  max-width: 340px;
+  height: 10px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+}
+
+.cf-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.85);
+  width: 0;
+  transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+.cf-numbers {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.cf-big {
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.cf-unit {
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+/* ── SEVERITY BADGE ── */
+.severity-badge {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  padding: 20px 24px;
+  text-align: center;
+  min-width: 140px;
+}
+
+.badge-icon { font-size: 36px; margin-bottom: 8px; }
+
+.badge-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-bottom: 4px;
+}
+
+.badge-value {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ── SEVERITY SCALE ── */
+.severity-scale {
+  display: flex;
+  gap: 6px;
+  margin-top: 20px;
+  align-items: center;
+}
+
+.scale-item {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.2);
+  position: relative;
+}
+
+.scale-item.active {
+  background: rgba(255,255,255,0.85);
+}
+
+/* ── MAIN CONTENT ── */
+.content-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: var(--accent-pale);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.card-title {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.card-sub {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.card-body { padding: 24px; }
+
+/* ── PATIENT SUMMARY ── */
+.patient-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat-box {
+  padding: 14px 16px;
+  background: var(--bg);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 5px;
+  font-family: var(--mono);
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.stat-value.accent { color: var(--accent); }
+
+/* ── RECOMMENDATIONS ── */
+.rec-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rec-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--accent-pale);
+  border: 1px solid var(--accent-mid);
+  border-radius: 10px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.5;
+  animation: fadeUp 0.3s ease both;
+}
+
+.rec-item:nth-child(1) { animation-delay: 0.05s; }
+.rec-item:nth-child(2) { animation-delay: 0.10s; }
+.rec-item:nth-child(3) { animation-delay: 0.15s; }
+.rec-item:nth-child(4) { animation-delay: 0.20s; }
+.rec-item:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.rec-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  background: white;
+  border: 1px solid var(--accent-mid);
+  border-radius: 5px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── REASONING TRACE ── */
+.rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rule-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.rule-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.rule-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 5px;
+  background: var(--accent);
+  color: white;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.rule-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.rule-cf-pill {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--accent-pale);
+  color: var(--accent);
+  border: 1px solid var(--accent-mid);
+  flex-shrink: 0;
+}
+
+.rule-card-body {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--ink-3);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.rule-card-body::before {
+  content: 'REASON';
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--ink-3);
+  background: var(--line);
+  padding: 2px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ── CF BREAKDOWN ── */
+.cf-breakdown {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.cf-item {
+  padding: 14px 16px;
+  background: var(--bg);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
+.cf-item-label {
+  font-size: 11px;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  margin-bottom: 4px;
+}
+
+.cf-item-value {
+  font-size: 22px;
+  font-weight: 600;
+  font-family: var(--mono);
+  color: var(--accent);
+}
+
+.cf-item-bar {
+  height: 4px;
+  background: var(--line);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.cf-item-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 1s ease;
+}
+
+/* ── DIFFERENTIAL ── */
+.diff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.diff-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--amber-pale);
+  border: 1px solid #F9E4A0;
+  border-radius: 10px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.diff-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* ── DISCLAIMER ── */
+.disclaimer {
+  background: var(--ink);
+  color: #888;
+  border-radius: 12px;
+  padding: 20px 24px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  display: flex;
+  gap: 14px;
+}
+
+.disclaimer-icon { font-size: 20px; flex-shrink: 0; }
+
+.disclaimer strong { color: #bbb; display: block; margin-bottom: 4px; }
+
+/* ── PRINT BUTTON ── */
+.action-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.btn {
+  height: 44px;
+  padding: 0 22px;
+  border-radius: 9px;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background: white;
+  color: var(--ink-2);
+  border: 1.5px solid var(--line);
+}
+
+.btn-outline:hover {
+  background: var(--bg);
+  transform: translateY(-1px);
+}
+
+footer {
+  background: var(--ink);
+  color: #555;
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  font-family: var(--mono);
+}
+footer strong { color: #888; }
+
+@media print {
+  .topbar, .action-row, footer { display: none; }
+  .result-banner { background: #333 !important; }
+  body { background: white; }
+}
+</style>
+</head>
+
+<!-- Set severity class on body -->
+<body class="sev-{{ result.severity }}">
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-mark">🦟</div>
+    <div>
+      <div class="brand-name">DengueXpert</div>
+      <div class="brand-tag">DIAGNOSIS RESULT</div>
+    </div>
+  </div>
+  <a href="/" class="btn-back">← New Consultation</a>
+</nav>
+
+<!-- RESULT BANNER -->
+<div class="result-banner">
+  <div class="banner-grid">
+    <div>
+      <div class="banner-eyebrow">Diagnosis Complete</div>
+      <div class="banner-title">{{ result.diagnosis }}</div>
+      <div class="banner-patient">
+        Patient: <strong>{{ patient.name }}</strong> ·
+        {{ patient.district | title }} District ·
+        {{ patient.age }} years old
+      </div>
+
+      <div class="cf-section">
+        <div class="cf-label">Certainty Factor</div>
+        <div class="cf-track">
+          <div class="cf-fill" id="cf-bar" style="width:0%"></div>
+        </div>
+        <div class="cf-numbers">
+          <span class="cf-big" id="cf-num">0</span>
+          <span class="cf-unit">% confidence</span>
+        </div>
+      </div>
+
+      <!-- Severity scale -->
+      <div class="severity-scale">
+        <div class="scale-item {% if result.severity >= 0 %}active{% endif %}"></div>
+        <div class="scale-item {% if result.severity >= 1 %}active{% endif %}"></div>
+        <div class="scale-item {% if result.severity >= 2 %}active{% endif %}"></div>
+        <div class="scale-item {% if result.severity >= 3 %}active{% endif %}"></div>
+      </div>
+    </div>
+
+    <div class="severity-badge">
+      <div class="badge-icon">
+        {% if result.severity == 0 %}✅
+        {% elif result.severity == 1 %}🟡
+        {% elif result.severity == 2 %}🟠
+        {% else %}🚨{% endif %}
+      </div>
+      <div class="badge-label">Severity</div>
+      <div class="badge-value">{{ meta.label }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content-wrap">
+
+  <!-- ACTION BUTTONS -->
+  <div class="action-row">
+    <button class="btn btn-primary" onclick="window.print()">🖨 Print Report</button>
+    <a href="/" class="btn btn-outline">← New Patient</a>
+  </div>
+
+  <!-- PATIENT SUMMARY -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">👤</div>
+      <div>
+        <div class="card-title">Patient Summary</div>
+        <div class="card-sub">Entered consultation data</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="patient-grid">
+        <div class="stat-box">
+          <div class="stat-label">Name</div>
+          <div class="stat-value">{{ patient.name }}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Age</div>
+          <div class="stat-value">{{ patient.age }} years</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">District</div>
+          <div class="stat-value accent">{{ patient.district | title }}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Temperature</div>
+          <div class="stat-value accent">{{ patient.fever }}°C</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Days of Fever</div>
+          <div class="stat-value">{{ patient.days_of_fever }} days</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Platelet Count</div>
+          <div class="stat-value {% if patient.platelet < 100000 %}accent{% endif %}">
+            {{ '{:,}'.format(patient.platelet | int) }}
+          </div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Severity Level</div>
+          <div class="stat-value accent">{{ meta.label }}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Certainty</div>
+          <div class="stat-value accent">{{ cf_percent }}%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECOMMENDATIONS -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">💊</div>
+      <div>
+        <div class="card-title">Clinical Recommendations</div>
+        <div class="card-sub">Actions to take based on diagnosis</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <ul class="rec-list">
+        {% for rec in result.recommendations %}
+        <li class="rec-item">
+          <span class="rec-num">{{ loop.index }}</span>
+          {{ rec }}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- REASONING TRACE -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🧠</div>
+      <div>
+        <div class="card-title">Reasoning Trace — Explanation Facility</div>
+        <div class="card-sub">Every rule that fired and why — forward chaining inference</div>
+      </div>
+    </div>
+    <div class="card-body">
+      {% if result.fired_rules %}
+      <div class="rule-list">
+        {% for r in result.fired_rules %}
+        <div class="rule-card">
+          <div class="rule-card-header">
+            <span class="rule-tag">{{ r.rule }}</span>
+            <span class="rule-name">{{ r.name }}</span>
+            <span class="rule-cf-pill">CF = {{ (r.cf * 100) | int }}%</span>
+          </div>
+          <div class="rule-card-body">{{ r.reason }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="color:var(--ink-3);font-size:13px;">No rules fired — fever below threshold.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- CF BREAKDOWN -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📊</div>
+      <div>
+        <div class="card-title">Certainty Factor Analysis</div>
+        <div class="card-sub">How the confidence score was calculated</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="cf-breakdown">
+        <div class="cf-item">
+          <div class="cf-item-label">BASE DIAGNOSIS CF</div>
+          <div class="cf-item-value">
+            {% if result.fired_rules %}{{ (result.fired_rules[0].cf * 100) | int }}%{% else %}0%{% endif %}
+          </div>
+          <div class="cf-item-bar">
+            <div class="cf-item-fill" style="width:{% if result.fired_rules %}{{ (result.fired_rules[0].cf * 100) | int }}{% else %}0{% endif %}%"></div>
+          </div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-item-label">COMBINED FINAL CF</div>
+          <div class="cf-item-value">{{ cf_percent }}%</div>
+          <div class="cf-item-bar">
+            <div class="cf-item-fill" style="width:{{ cf_percent }}%"></div>
+          </div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-item-label">RULES FIRED</div>
+          <div class="cf-item-value">{{ result.fired_rules | length }}</div>
+          <div class="cf-item-bar">
+            <div class="cf-item-fill" style="width:{{ [result.fired_rules | length * 14, 100] | min }}%"></div>
+          </div>
+        </div>
+        <div class="cf-item">
+          <div class="cf-item-label">SEVERITY LEVEL</div>
+          <div class="cf-item-value">{{ result.severity }} / 3</div>
+          <div class="cf-item-bar">
+            <div class="cf-item-fill" style="width:{{ result.severity * 33 }}%"></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding:14px 16px;background:var(--bg);border-radius:10px;font-size:12.5px;color:var(--ink-3);font-family:var(--mono);line-height:1.8;border:1px solid var(--line);">
+        CF Formula: combined = CF₁ + CF₂ × (1 − CF₁)<br>
+        Seasonal risk boost: +0.15 if May/June/Oct/Nov<br>
+        High-risk district boost: +0.10 if Colombo/Gampaha/Kandy/Kalutara/Galle/Ratnapura
+      </div>
+    </div>
+  </div>
+
+  <!-- DIFFERENTIAL DIAGNOSIS (if any) -->
+  {% if result.differential %}
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">⚠</div>
+      <div>
+        <div class="card-title">Differential Diagnoses to Consider</div>
+        <div class="card-sub">Other conditions that may present similarly in Sri Lanka</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="diff-list">
+        {% for d in result.differential %}
+        <div class="diff-item">
+          <span class="diff-icon">🔍</span>
+          <span>{{ d }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer">
+    <span class="disclaimer-icon">ℹ</span>
+    <div>
+      <strong>Academic Demonstration — Not Medical Advice</strong>
+      This system was developed as an MSc Artificial Intelligence project demonstrating
+      expert system concepts including forward-chaining inference, certainty factors, and
+      explanation facilities. It is based on WHO Dengue Guidelines 2009 and Sri Lanka MOH
+      data. Always consult a qualified medical professional for actual diagnosis and treatment.
+      In an emergency call <strong style="color:#bbb">1990 (Suwaseriya)</strong>.
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <strong>DengueXpert</strong> · MSc Artificial Intelligence · Cognitive Systems ·
+  WHO Dengue Classification 2009 · Sri Lanka Ministry of Health
+</footer>
+
+<script>
+// Animate certainty bar on load
+window.addEventListener('load', () => {
+  const target = {{ cf_percent }};
+  const bar    = document.getElementById('cf-bar');
+  const num    = document.getElementById('cf-num');
+  let current  = 0;
+  const step   = target / 60;
+
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    bar.style.width = current + '%';
+    num.textContent = Math.round(current);
+    if (current >= target) clearInterval(timer);
+  }, 16);
+});
+</script>
+
+</body>
+</html>
