@@ -1,4 +1,9 @@
-from flask import Flask, render_template, request
+"""
+Flask Web Interface
+Demonstrates all ES characteristics visually in the browser.
+"""
+
+from flask import Flask, render_template, request, jsonify
 from knowledge_base import DengueExpertSystem, PatientFact
 import datetime
 
@@ -30,32 +35,32 @@ def diagnose():
         'mucosal_bleeding':      'mucosal_bleeding'     in f,
         'rapid_breathing':       'rapid_breathing'      in f,
         'fluid_accumulation':    'fluid_accumulation'   in f,
-        'platelet':              float(f.get('platelet', 150000)),
+        'platelet':              float(f.get('platelet', 0)) if f.get('platelet') else None,
         'severe_bleeding':       'severe_bleeding'       in f,
         'organ_failure':         'organ_failure'         in f,
         'altered_consciousness': 'altered_consciousness' in f,
         'jaundice':              'jaundice'              in f,
         'rat_exposure':          'rat_exposure'          in f,
+        'cyclical_fever':        'cyclical_fever'        in f,
     }
 
     engine = DengueExpertSystem()
     result = engine.run(PatientFact(**patient_data))
 
     severity_meta = {
-        0: {'label': 'LOW RISK',      'color': 'green',  'icon': '✓',  'badge': 'Unlikely Dengue'},
-        1: {'label': 'MODERATE',      'color': 'yellow', 'icon': '⚠',  'badge': 'Probable Dengue'},
-        2: {'label': 'HIGH RISK',     'color': 'orange', 'icon': '⚠⚠', 'badge': 'Warning Signs'},
-        3: {'label': 'CRITICAL',      'color': 'red',    'icon': '🚨', 'badge': 'Severe / DSS'},
+        0: {'label': 'LOW RISK',   'color': '#22c55e', 'badge': 'Unlikely Dengue'},
+        1: {'label': 'MODERATE',   'color': '#eab308', 'badge': 'Probable Dengue'},
+        2: {'label': 'HIGH RISK',  'color': '#f97316', 'badge': 'Warning Signs'},
+        3: {'label': 'CRITICAL',   'color': '#ef4444', 'badge': 'Severe / DSS'},
     }
 
     meta = severity_meta[result.severity]
-    cf_percent = int(result.final_cf * 100)
 
     return render_template('result.html',
         patient=patient_data,
         result=result,
         meta=meta,
-        cf_percent=cf_percent
+        cf_percent=int(result.final_cf * 100)
     )
 
 if __name__ == '__main__':
